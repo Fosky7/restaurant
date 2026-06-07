@@ -1,0 +1,60 @@
+name: KrossBuild Deploy (Artifact Upload)
+
+# Builds the app and uploads the prebuilt dist/ straight to Netlify via
+# KrossBuild's ci-deploy-ingest function. Netlify never clones/builds the repo,
+# which permanently avoids the EISDIR build failure class.
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+concurrency:
+  group: kross-deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Build & Upload Artifact
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🔍 Checkout
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: 📥 Install dependencies
+        run: bun install
+
+      - name: 🏗️ Build
+        run: bun run build
+
+      - name: 🗜️ Zip dist
+        run: |
+          if [ ! -d dist ]; then echo "::error::dist/ not found after build"; exit 1; fi
+          cd dist && zip -r ../dist.zip . && cd ..
+          echo "Artifact size: $(du -h dist.zip | cut -f1)"
+
+      - name: 🚀 Upload artifact to KrossBuild
+        env:
+          INGEST_URL: ${{ secrets.KROSS_INGEST_URL }}
+          PROJECT_ID: ${{ secrets.KROSS_PROJECT_ID }}
+          DEPLOY_TOKEN: ${{ secrets.KROSS_DEPLOY_TOKEN }}
+          ANON_KEY: ${{ secrets.KROSS_ANON_KEY }}
+        run: |
+          if [ -z "$INGEST_URL" ] || [ -z "$DEPLOY_TOKEN" ]; then
+            echo "::warning::KROSS_* secrets not configured — skipping deploy."
+            exit 0
+          fi
+          echo "Uploading prebuilt artifact to KrossBuild…"
+          HTTP=$(curl -sS -w "%{http_code}" -o response.json -X POST "$INGEST_URL" \
+            -H "apikey: $ANON_KEY" \
+            -H "x-kross-deploy-token: $DEPLOY_TOKEN" \
+            -F "projectId=$PROJECT_ID" \
+            -F "artifact=@dist.zip")
+          echo "Response ($HTTP):"; cat response.json; echo
+          if [ "$HTTP" -ge 300 ]; then echo "::error::Deploy upload failed"; exit 1; fi
+          echo "✅ Artifact uploaded; KrossBuild is deploying to Netlify."
