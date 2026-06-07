@@ -1,5 +1,5 @@
-import Navbar from "../components/restaurant/Navbar";
-import Footer from "../components/restaurant/Footer";
+import Navbar from "@/components/restaurant/Navbar";
+import Footer from "@/components/restaurant/Footer";
 
 const Reservations = () => (
   <main>
