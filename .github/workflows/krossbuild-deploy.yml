@@ -8,6 +8,11 @@ on:
   push:
     branches: [ main, master ]
   workflow_dispatch:
+    inputs:
+      deployment_id:
+        description: "Existing KrossBuild deployment id to reuse (optional)"
+        required: false
+        default: ""
 
 concurrency:
   group: kross-deploy-${{ github.ref }}
@@ -54,6 +59,7 @@ jobs:
             -H "apikey: $ANON_KEY" \
             -H "x-kross-deploy-token: $DEPLOY_TOKEN" \
             -F "projectId=$PROJECT_ID" \
+            -F "deploymentId=${{ github.event.inputs.deployment_id }}" \
             -F "artifact=@dist.zip")
           echo "Response ($HTTP):"; cat response.json; echo
           if [ "$HTTP" -ge 300 ]; then echo "::error::Deploy upload failed"; exit 1; fi
