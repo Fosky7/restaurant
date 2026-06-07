@@ -55,7 +55,7 @@ const Navbar = () => {
           </button>
         </div>
         <div
-          className={`flex-grow-0 md:flex-grow md:flex justify-center md:overflow-x-auto md:[-ms-overflow-style:'none'] md:[scrollbar-width:'none'] ${isMobileMenuOpen ? "absolute top-16 left-0 w-full bg-background/95 backdrop-blur-md flex flex-col items-center py-4 border-b border-border" : "hidden md:flex"}`}
+          className={`flex-grow-0 md:flex-grow md:flex justify-center md:overflow-x-auto md:[-ms-overflow-style:\'none\'] md:[scrollbar-width:\'none\'] ${isMobileMenuOpen ? "absolute top-16 left-0 w-full bg-background/95 backdrop-blur-md flex flex-col items-center py-4 border-b border-border" : "hidden md:flex"}`}
           role="navigation"
           aria-label="Main navigation"
         >
